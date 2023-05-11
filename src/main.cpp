@@ -1,0 +1,31 @@
+#include "rendering/rendering.h"
+
+#include <iostream>
+
+void mainLoop();
+
+int main(int argc, char* args[]) {
+	const char* resourcesPath = "assets/resources.json";
+	json resources;
+
+	ERROR_CODE ec = SUCCESS;
+	ec = loadJson(resourcesPath, resources);
+	if (ec != SUCCESS) {
+		std::cout << "Failed to load resources json" << std::endl;
+		return -1;
+	}
+	
+	ec = initRendering(resources);
+	if (ec != SUCCESS) {
+		std::cout << "Failed to init rendering " << ec << std::endl;
+		return -1;
+	}
+
+	mainLoop();
+
+	return 0;
+}
+
+void mainLoop() {
+
+}
