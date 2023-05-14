@@ -1,4 +1,5 @@
-#include "rendering/rendering.h"
+#include "engine/rendering/rendering.h"
+#include "engine/inputs/inputs.h"
 
 #include <iostream>
 
@@ -27,5 +28,17 @@ int main(int argc, char* args[]) {
 }
 
 void mainLoop() {
+
+	bool running = true;
+
+	while (running) {
+		updateInputState();
+
+		if (handleInput(QUIT)) {
+			running = false;
+			break;
+		}
+
+	}
 
 }
