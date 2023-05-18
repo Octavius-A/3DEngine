@@ -49,9 +49,8 @@ void Mesh::draw() {
     glBindVertexArray(0);
 }
 
-Model::Model(const char* path, std::string _shaderId) {
+Model::Model(const char* path) {
     loadModel(path);
-    shaderId = _shaderId;
 }
 
 void Model::draw() {

@@ -2,9 +2,18 @@
     "models":[
         {
             "id": 0,
-            "shader": "basic",
             "desc": "Test/debug model. Two texture cubes.",
             "path": "assets/models/two_cubes.obj"
+        },
+        {
+            "id": 1,
+            "desc": "Debug cube. one big cube.",
+            "path": "assets/models/cube.obj"
+        },
+        {
+            "id": 2,
+            "desc": "green kewb.",
+            "path": "assets/models/green.obj"
         }
     ]
 }

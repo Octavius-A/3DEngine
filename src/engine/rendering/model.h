@@ -30,11 +30,10 @@ private:
 
 class Model {
 public:
-	Model(const char* path, std::string shaderId);
+	Model(const char* path);
 	void draw();
-	std::string shaderId;
-private:
 	std::vector<Mesh> meshes;
+private:
 	std::string directory;
 	void loadModel(std::string path);
 	void processNode(aiNode* node, const aiScene* scene);

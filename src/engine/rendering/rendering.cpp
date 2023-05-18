@@ -75,8 +75,7 @@ ERROR_CODE initRendering(json resources) {
 		json modelData = *modelsIt;
 		unsigned int modelId = modelData["id"];
 		std::string path = modelData["path"];
-		std::string shader = modelData["shader"];
-		modelBank[modelId] = new Model(path.c_str(), shader);
+		modelBank[modelId] = new Model(path.c_str());
 	}
 
 	return ec;
@@ -203,6 +202,7 @@ void renderFrame() {
 		glm::vec3 position = obj->position;
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, position);
+		model = glm::scale(model, glm::vec3(obj->scale, obj->scale, obj->scale));
 		// rotate?
 		basicShader->setMat4("model", model);
 		modelBank[obj->modelId]->draw();
@@ -224,7 +224,12 @@ void renderFrame() {
 	float dirY = camera.front.y;
 	float dirZ = camera.front.z;
 	ImGui::Text("dir: %f, %f, %f", dirX, dirY, dirZ);
+
+	int fps = globalGameState.fps;
+	ImGui::Text("fps: %d", fps);
 	ImGui::End();
+
+
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
