@@ -6,7 +6,7 @@
 void mainLoop();
 
 int main(int argc, char* args[]) {
-	const char* resourcesPath = "assets/resources.json";
+	const char* resourcesPath = "resources.json";
 	json resources;
 
 	ERROR_CODE ec = SUCCESS;
@@ -38,6 +38,8 @@ void mainLoop() {
 			running = false;
 			break;
 		}
+		
+		renderFrame();
 
 	}
 

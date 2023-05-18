@@ -1,0 +1,10 @@
+{
+    "models":[
+        {
+            "id": 0,
+            "shader": "basic",
+            "desc": "Test/debug model. Two texture cubes.",
+            "path": "assets/models/two_cubes.obj"
+        }
+    ]
+}
