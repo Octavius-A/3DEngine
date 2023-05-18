@@ -3,6 +3,7 @@
 #include "model.h"
 #include "../utils/io.h"
 #include "../gameState.h"
+
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
@@ -14,6 +15,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <map>
+
 
 
 ERROR_CODE initSDL(const char* windowTitle, int screenWidth, int screenHeight);
@@ -30,7 +32,7 @@ std::unordered_map<unsigned int, Shader*> shaderBank;
 std::unordered_map<unsigned int, Model*> modelBank;
 
 
-Camera camera{
+Camera camera = Camera{
 	glm::vec3(0.0f, 0.0f, 0.0f),
 	glm::vec3(0.0f, 0.0f, -1.0f),
 	glm::vec3(0.0f, 1.0f, 0.0f),
@@ -109,6 +111,10 @@ ERROR_CODE initGL() {
 		return FAILED_INIT_GL;
 	}
 
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
 	return SUCCESS;
 }
 
@@ -146,6 +152,29 @@ GLuint loadTexture(const char* path) {
 	return textureID;
 }
 
+void exitRendering() {
+	for (auto shaderPair : shaderBank) {
+		delete shaderPair.second;
+	}
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
+
+	SDL_DestroyWindow(window);
+	try {
+		SDL_Quit();
+	}
+	catch (char* e) {
+		std::cout << "Exception Caught: " << e << std::endl;
+	}
+}
+
+void setCameraParams(glm::vec3 pos, glm::vec3 front, glm::vec3 up){
+	camera.pos = pos;
+	camera.front = front;
+	camera.up = up;
+}
+
 void renderFrame() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -155,11 +184,6 @@ void renderFrame() {
 	ImGui::NewFrame();
 
 	glEnable(GL_DEPTH_TEST);
-
-	glFrontFace(GL_CW);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -184,8 +208,25 @@ void renderFrame() {
 		modelBank[obj->modelId]->draw();
 	}
 
+
+	ImGui::Begin("Debug");
+	ImVec2 size(300, 100);
+	ImVec2 pos(0, 0);
+	ImGui::SetWindowSize(size);
+	ImGui::SetWindowPos(pos);
+
+	float camX = camera.pos.x;
+	float camY = camera.pos.y;
+	float camZ = camera.pos.z;
+	ImGui::Text("pos: %f, %f, %f", camX, camY, camZ);
+
+	float dirX = camera.front.x;
+	float dirY = camera.front.y;
+	float dirZ = camera.front.z;
+	ImGui::Text("dir: %f, %f, %f", dirX, dirY, dirZ);
+	ImGui::End();
+
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	SDL_GL_SwapWindow(window);
 }
-

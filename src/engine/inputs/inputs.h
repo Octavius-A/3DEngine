@@ -14,3 +14,5 @@ enum INPUT {
 
 void updateInputState();
 bool handleInput(INPUT input);
+bool checkInputState(INPUT input);
+void getMouseXY(int& mouseX, int& mouseY);

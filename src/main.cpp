@@ -1,5 +1,7 @@
 #include "engine/rendering/rendering.h"
 #include "engine/inputs/inputs.h"
+#include "engine/gameState.h"
+#include "player.h"
 
 #include <iostream>
 
@@ -21,23 +23,36 @@ int main(int argc, char* args[]) {
 		std::cout << "Failed to init rendering " << ec << std::endl;
 		return -1;
 	}
-
+	
 	mainLoop();
+
+	exitRendering();
 
 	return 0;
 }
 
 void mainLoop() {
 
+	Player* player = new Player();
+
+	initGameObject3D(0, 0, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	initGameObject3D(0, 0, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	initGameObject3D(0, 0, glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	initGameObject3D(0, 0, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+
 	bool running = true;
 
 	while (running) {
+
 		updateInputState();
 
 		if (handleInput(QUIT)) {
 			running = false;
 			break;
 		}
+		updateGame();
+
+		player->update();
 		
 		renderFrame();
 

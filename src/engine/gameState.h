@@ -18,11 +18,13 @@ struct GameObject3D {
 
 struct GameState {
 	std::vector<GameObject3D*> gameObjects;
+	double dTime;
+	int fps;
 };
 
 extern GameState globalGameState;
 
-
+void updateGame();
 
 // Initialises a new 3D game object, adds it to the game object list, and returns a pointer
 // That can be managed by whatever called.

@@ -18,6 +18,7 @@ struct Camera {
 };
 
 ERROR_CODE initRendering(json resources);
-//void exitRendering();
+void setCameraParams(glm::vec3 pos, glm::vec3 front, glm::vec3 up);
+void exitRendering();
 void renderFrame();
 
