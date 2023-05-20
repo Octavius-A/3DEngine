@@ -52,7 +52,7 @@ void mainLoop() {
 
 	bool running = true;
 
-	btRigidBody* playerSphere = registerCollisionSphere(glm::vec3(0, 10, 0));
+	btRigidBody* playerSphere = registerCollisionSphere(glm::vec3(0, 10, 0), 0.5f, 80.f);
 
 	glm::vec3 collPosition = glm::vec3(1.0f, 0.0f, 0.0f);
 	initGameObject3D(2, 0, collPosition, glm::vec3(0.0f), 1.0f);
@@ -70,13 +70,17 @@ void mainLoop() {
 
 		player->update();
 		btVector3 mov = btVector3(player->controller->move.x, player->controller->move.y, player->controller->move.z);
-		playerSphere->translate(mov);
+		//playerSphere->translate(mov);
+		playerSphere->setLinearVelocity(mov);
 
 		updatePhysicsEngine();
+
+		btVector3 linVel = playerSphere->getLinearVelocity();
 
 		btVector3 pos = playerSphere->getCenterOfMassPosition();
 
 		player->controller->position = glm::vec3(pos.x(), pos.y(), pos.z());
+		player->controller->move = glm::vec3(linVel.x(), linVel.y(), linVel.z());
 		setCameraParams(player->controller->position, player->controller->direction, player->controller->up);
 		
 		renderFrame();

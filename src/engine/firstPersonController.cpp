@@ -9,6 +9,7 @@ FirstPersonController::FirstPersonController() {
 	position = glm::vec3(0.0f, 0.0f, 0.0f);
 	direction = glm::vec3(0.0f, 0.0f, -1.0f);
 	up = glm::vec3(0.0f, 1.0f, 0.0f);
+	move = glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
 void FirstPersonController::update() {
@@ -43,12 +44,14 @@ void FirstPersonController::update() {
 	moveDir.z = sin(glm::radians(yaw));
 	moveDir = glm::normalize(moveDir);
 
-	static float playerSpeed = 2.0f;
+	static float playerSpeed = 10.0f;
 	float finalSpeed = playerSpeed * dTime;
-	float strafeSpeed = (playerSpeed * 0.5) * dTime;
+	float strafeModifier = 1.0f;
+	float strafeSpeed = (playerSpeed * strafeModifier) * dTime;
 
-	move = glm::vec3(0.0f,0.0f,0.0f);
 
+	//move = glm::vec3(0.0f,0.0f,0.0f);
+	
 	if (checkInputState(W)) {
 		move += moveDir * finalSpeed;
 	}
@@ -61,6 +64,6 @@ void FirstPersonController::update() {
 	if (checkInputState(D)) {
 		move += glm::normalize(glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f))) * strafeSpeed;
 	}
-
+	
 	//setCameraParams(position, direction, up);
 }

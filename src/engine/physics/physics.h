@@ -12,4 +12,4 @@ void updatePhysicsEngine();
 void exitPhysicsEngine();
 
 btRigidBody* registerStaticCollisionMesh(const char* path, glm::vec3 position);
-btRigidBody* registerCollisionSphere(glm::vec3 position);
+btRigidBody* registerCollisionSphere(glm::vec3 position, float radius, float mass);

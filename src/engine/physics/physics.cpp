@@ -39,7 +39,9 @@ void initPhysicsEngine() {
 
 	btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
 	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
+	
 	btRigidBody* body = new btRigidBody(rbInfo);
+	body->setFriction(1);
 
 	dynamicsWorld->addRigidBody(body);
 }
@@ -99,15 +101,15 @@ btRigidBody* registerStaticCollisionMesh(const char* path, glm::vec3 position) {
 	return body;
 }
 
-btRigidBody* registerCollisionSphere(glm::vec3 position) {
-	btCollisionShape* colShape = new btSphereShape(btScalar(1.));
+btRigidBody* registerCollisionSphere(glm::vec3 position, float _radius, float _mass) {
+	btCollisionShape* colShape = new btSphereShape(btScalar(_radius));
 	collisionShapes.push_back(colShape);
 
 	/// Create Dynamic Objects
 	btTransform startTransform;
 	startTransform.setIdentity();
 
-	btScalar mass(1.f);
+	btScalar mass(_mass);
 
 	//rigidbody is dynamic if and only if mass is non zero, otherwise static
 	bool isDynamic = (mass != 0.f);
@@ -121,9 +123,10 @@ btRigidBody* registerCollisionSphere(glm::vec3 position) {
 	//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
 	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
 	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
-
-	btRigidBody* body = new btRigidBody(rbInfo);
 	
+	btRigidBody* body = new btRigidBody(rbInfo);
+	body->setFriction(1);
+	body->setRollingFriction(1);
 	// by default bullet deactivates objects that stay static for a few seconds.
 	body->setActivationState(DISABLE_DEACTIVATION);
 
