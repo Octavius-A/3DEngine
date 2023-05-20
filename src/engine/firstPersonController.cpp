@@ -47,17 +47,20 @@ void FirstPersonController::update() {
 	float finalSpeed = playerSpeed * dTime;
 	float strafeSpeed = (playerSpeed * 0.5) * dTime;
 
+	move = glm::vec3(0.0f,0.0f,0.0f);
+
 	if (checkInputState(W)) {
-		position += moveDir * finalSpeed;
+		move += moveDir * finalSpeed;
 	}
 	if (checkInputState(S)) {
-		position -= moveDir * finalSpeed;
+		move -= moveDir * finalSpeed;
 	}
 	if (checkInputState(A)) {
-		position -= glm::normalize(glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f))) * strafeSpeed;
+		move -= glm::normalize(glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f))) * strafeSpeed;
 	}
 	if (checkInputState(D)) {
-		position += glm::normalize(glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f))) * strafeSpeed;
+		move += glm::normalize(glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f))) * strafeSpeed;
 	}
-	setCameraParams(position, direction, up);
+
+	//setCameraParams(position, direction, up);
 }

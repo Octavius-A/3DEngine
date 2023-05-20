@@ -1,7 +1,7 @@
 #include "engine/rendering/rendering.h"
 #include "engine/inputs/inputs.h"
 #include "engine/gameState.h"
-#include "engine/collision/collision.h"
+#include "engine/physics/physics.h"
 #include "engine/rendering/model.h"
 #include "player.h"
 
@@ -25,22 +25,20 @@ int main(int argc, char* args[]) {
 		std::cout << "Failed to init rendering " << ec << std::endl;
 		return -1;
 	}
-	
+	initPhysicsEngine();
+
+
 	mainLoop();
 
+	exitPhysicsEngine();
 	exitRendering();
 
 	return 0;
 }
 
 void mainLoop() {
-
 	Player* player = new Player();
 
-	/*initGameObject3D(0, 0, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
-	initGameObject3D(0, 0, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
-	initGameObject3D(0, 0, glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
-	initGameObject3D(0, 0, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);*/
 	initGameObject3D(1, 0, glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
 
 	
@@ -52,27 +50,18 @@ void mainLoop() {
 	initGameObject3D(2, 0, vert2, glm::vec3(0.0f), 0.2f);
 	initGameObject3D(2, 0, vert3, glm::vec3(0.0f), 0.2f);
 
-	Model* testModel = new Model("assets/models/green.obj");
-
-	Mesh testMesh = testModel->meshes.at(0);
-	for (auto i : testMesh.indices) {
-		std::cout << i << std::endl;
-	}
-
-
-	//CollisionMesh* testMesh = new CollisionMesh{
-	//	{{glm::vec3(-0.5f, -1.0f, 0.5f), glm::vec3(-0.5f, -1.0f, -0.5f), glm::vec3(0.5f, -1.0f, 0.5f)}},
-	//	{{glm::vec3(0.5f, -1.0f, 0.5f), glm::vec3(-0.5f, -1.0f, -0.5f), glm::vec3(0.5f, -1.0f, -0.5f)}}
-	//};
-
-	//registerCollisionMesh(testMesh);
-
 	bool running = true;
+
+	btRigidBody* playerSphere = registerCollisionSphere(glm::vec3(0, 10, 0));
+
+	glm::vec3 collPosition = glm::vec3(1.0f, 0.0f, 0.0f);
+	initGameObject3D(2, 0, collPosition, glm::vec3(0.0f), 1.0f);
+	btRigidBody* boxMesh = registerStaticCollisionMesh("assets/models/green.obj", collPosition);
 
 	while (running) {
 
 		updateInputState();
-
+		
 		if (handleInput(QUIT)) {
 			running = false;
 			break;
@@ -80,13 +69,17 @@ void mainLoop() {
 		updateGame();
 
 		player->update();
+		btVector3 mov = btVector3(player->controller->move.x, player->controller->move.y, player->controller->move.z);
+		playerSphere->translate(mov);
 
-		//updateCollisionObjects();
+		updatePhysicsEngine();
 
-		player->controller->position = player->collisionSphere->position;
+		btVector3 pos = playerSphere->getCenterOfMassPosition();
+
+		player->controller->position = glm::vec3(pos.x(), pos.y(), pos.z());
+		setCameraParams(player->controller->position, player->controller->direction, player->controller->up);
 		
 		renderFrame();
 
 	}
-
 }
