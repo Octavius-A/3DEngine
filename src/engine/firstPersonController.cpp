@@ -15,17 +15,19 @@ FirstPersonController::FirstPersonController() {
 void FirstPersonController::update() {
 	double dTime = globalGameState.dTime;
 
-	static float yaw = 0.0f;
-	static float pitch = 0.0f;
-	static float maxPitch = 89.0f;
-	static float minPitch = -89.0f;
+	static double yaw = 0.0f;
+	static double pitch = 0.0f;
+	static double maxPitch = 89.0f;
+	static double minPitch = -89.0f;
 
-	int mouseX;
-	int mouseY;
+
+	Sint32 mouseX = 0;
+	Sint32 mouseY = 0;
 	getMouseXY(mouseX, mouseY);
+	
 
-	float xoffset = (float)mouseX * 100.0f * dTime;
-	float yoffset = (float)mouseY * 100.0f * dTime;
+	double xoffset = (double)mouseX * 100.0f * dTime;
+	double yoffset = (double)mouseY * 100.0f * dTime;
 
 	yaw += xoffset;
 	pitch -= yoffset;
@@ -44,26 +46,35 @@ void FirstPersonController::update() {
 	moveDir.z = sin(glm::radians(yaw));
 	moveDir = glm::normalize(moveDir);
 
-	static float playerSpeed = 10.0f;
+	static float playerSpeed = 0.01f;
 	float finalSpeed = playerSpeed * dTime;
 	float strafeModifier = 1.0f;
 	float strafeSpeed = (playerSpeed * strafeModifier) * dTime;
 
 
 	//move = glm::vec3(0.0f,0.0f,0.0f);
+	move = glm::vec3(0.0f);
 	
 	if (checkInputState(W)) {
-		move += moveDir * finalSpeed;
+		//move += moveDir * finalSpeed;
+		// 
+		//move = moveDir;
+		move += moveDir;
 	}
 	if (checkInputState(S)) {
-		move -= moveDir * finalSpeed;
+		//move -= moveDir * finalSpeed;
+		//move = -moveDir;
+		move -= moveDir;
 	}
 	if (checkInputState(A)) {
-		move -= glm::normalize(glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f))) * strafeSpeed;
+		move -= glm::normalize(glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f)));
 	}
 	if (checkInputState(D)) {
-		move += glm::normalize(glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f))) * strafeSpeed;
+		move += glm::normalize(glm::cross(direction, glm::vec3(0.0f, 1.0f, 0.0f)));
 	}
+
+	/*float len = glm::length(move);
+	std::cout << len << std::endl;*/
 	
 	//setCameraParams(position, direction, up);
 }

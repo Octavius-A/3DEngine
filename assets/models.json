@@ -14,6 +14,41 @@
             "id": 2,
             "desc": "green kewb.",
             "path": "assets/models/green.obj"
+        },
+        {
+            "id": 3,
+            "desc": "Collision test ground object :).",
+            "path": "assets/models/collisiontest_ground.obj"
+        },
+        {
+            "id": 4,
+            "desc": "Collision test long slope",
+            "path": "assets/models/collisiontest_long_slope.obj"
+        },
+        {
+            "id": 5,
+            "desc": "Collisino test shorter slope",
+            "path": "assets/models/collisiontest_short_slope.obj"
+        },
+        {
+            "id": 6,
+            "desc": "Collision test wall",
+            "path": "assets/models/collisiontest_wall_1.obj"
+        },
+        {
+            "id": 7,
+            "desc": "Collision test wall",
+            "path": "assets/models/collisiontest_wall_2.obj"
+        },
+        {
+            "id": 8,
+            "desc": "Collision test wall",
+            "path": "assets/models/collisiontest_wall_3.obj"
+        },
+        {
+            "id": 9,
+            "desc": "Collision test wall",
+            "path": "assets/models/collisiontest_wall_4.obj"
         }
     ]
 }

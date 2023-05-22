@@ -1,6 +1,8 @@
 #include "physics.h"
 #include "../gameState.h"
 
+#include <bullet/BulletCollision/NarrowPhaseCollision/btRaycastCallback.h>
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -11,39 +13,29 @@ btDefaultCollisionConfiguration* collisionConfiguration = nullptr;
 btCollisionDispatcher* dispatcher = nullptr;
 btBroadphaseInterface* overlappingPairCache = nullptr;
 btSequentialImpulseConstraintSolver* solver = nullptr;
+btDbvtBroadphase* broadPhase = nullptr;
+btOverlappingPairCallback* ghostPairCallback = nullptr;
+btVector3 worldMin(-1000, -1000, -1000);
+btVector3 worldMax(1000, 1000, 1000);
+btAxisSweep3* sweepBP = new btAxisSweep3(worldMin, worldMax);
 
 btAlignedObjectArray<btCollisionShape*> collisionShapes;
 
 void initPhysicsEngine() {
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);
-	overlappingPairCache = new btDbvtBroadphase();
+	overlappingPairCache = sweepBP;
 	solver = new btSequentialImpulseConstraintSolver;
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));
-
-	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
-
-	collisionShapes.push_back(groundShape);
-
-	btTransform groundTransform;
-	groundTransform.setIdentity();
-	groundTransform.setOrigin(btVector3(0, -50, 0));
-
-	btScalar mass(0.);
+	dynamicsWorld->getDispatchInfo().m_allowedCcdPenetration = 0.0001f;
 
 
 
-	btVector3 localInertia(0, 0, 0);
+	//broadPhase = new btDbvtBroadphase();
+	//ghostPairCallback = new btGhostPairCallback();
+	//broadPhase->getOverlappingPairCache()->setInternalGhostPairCallback(ghostPairCallback);
 
-
-	btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
-	
-	btRigidBody* body = new btRigidBody(rbInfo);
-	body->setFriction(1);
-
-	dynamicsWorld->addRigidBody(body);
 }
 
 btRigidBody* registerStaticCollisionMesh(const char* path, glm::vec3 position) {
@@ -55,7 +47,7 @@ btRigidBody* registerStaticCollisionMesh(const char* path, glm::vec3 position) {
 	}
 
 	// this is a shitty retarded way of doing this
-	const aiNode* rootNode = scene->mRootNode->mChildren[1];
+	const aiNode* rootNode = scene->mRootNode->mChildren[0];
 	aiMesh* mesh = scene->mMeshes[rootNode->mMeshes[0]]; // only support single mesh atm
 
 	btTriangleMesh* triangleMesh = new btTriangleMesh();
@@ -94,9 +86,11 @@ btRigidBody* registerStaticCollisionMesh(const char* path, glm::vec3 position) {
 	btDefaultMotionState* myMotionState = new btDefaultMotionState(meshTransform);
 	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, box, localInertia);
 	btRigidBody* body = new btRigidBody(rbInfo);
-
+	//body->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
+	
 	//add the body to the dynamics world
 	dynamicsWorld->addRigidBody(body);
+	//dynamicsWorld->addCollisionObject(body, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
 
 	return body;
 }
@@ -135,7 +129,75 @@ btRigidBody* registerCollisionSphere(glm::vec3 position, float _radius, float _m
 	return body;
 }
 
-void updatePhysicsEngine() { dynamicsWorld->stepSimulation(globalGameState.dTime); }
+btRigidBody* registerCollisionCapsule(glm::vec3 position, float _radius, float _height, float _mass) {
+	//btCollisionShape* colShape = new btSphereShape(btScalar(_radius));
+	btCollisionShape* colShape = new btCapsuleShape(_radius, _height);
+
+	collisionShapes.push_back(colShape);
+
+	/// Create Dynamic Objects
+	btTransform startTransform;
+	startTransform.setIdentity();
+
+	btScalar mass(_mass);
+
+	//rigidbody is dynamic if and only if mass is non zero, otherwise static
+	bool isDynamic = (mass != 0.f);
+
+	btVector3 localInertia(0, 0, 0);
+	if (isDynamic)
+		colShape->calculateLocalInertia(mass, localInertia);
+
+	startTransform.setOrigin(btVector3(position.x, position.y, position.z));
+
+	//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
+
+	btRigidBody* body = new btRigidBody(rbInfo);
+	/*body->setFriction(1);
+	body->setRollingFriction(1);*/
+	// by default bullet deactivates objects that stay static for a few seconds.
+	body->setActivationState(DISABLE_DEACTIVATION);
+	body->setAngularFactor(0.0f);
+	body->setSleepingThresholds(0.0, 0.0);
+
+	dynamicsWorld->addRigidBody(body);
+
+	return body;
+}
+
+btKinematicCharacterController* registerCharacterController() {
+	btTransform startTransform;
+	startTransform.setIdentity();
+	startTransform.setOrigin(btVector3(0.0f, 10.0f, 0.0f));
+	btPairCachingGhostObject* ghostObject = new btPairCachingGhostObject();
+	ghostObject->setWorldTransform(startTransform);
+
+	sweepBP->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
+	btScalar characterHeight = 0.5;
+	btScalar characterWidth = 0.25;
+	btConvexShape* capsule = new btCapsuleShape(characterWidth, characterHeight);
+	
+	ghostObject->setCollisionShape(capsule);
+	ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
+	ghostObject->setActivationState(DISABLE_DEACTIVATION);
+	ghostObject->setFriction(0);
+	btScalar stepHeight = btScalar(0.3f);
+	btKinematicCharacterController* character = new btKinematicCharacterController(ghostObject, capsule, stepHeight);
+	character->setGravity(btVector3(0, -10, 0));
+	
+	dynamicsWorld->addCollisionObject(ghostObject, btBroadphaseProxy::CharacterFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+	//dynamicsWorld->addRigidBody(ghostObject);
+
+	dynamicsWorld->addAction(character);
+
+	return character;
+}
+
+void updatePhysicsEngine(btKinematicCharacterController* ddd) {
+	dynamicsWorld->stepSimulation(globalGameState.dTime);
+}
 
 void exitPhysicsEngine() {
 	for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)

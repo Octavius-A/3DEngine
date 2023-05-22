@@ -4,18 +4,42 @@
 #include <iostream>
 
 GameState globalGameState;
+Uint32 previousTime = 0;
+Uint32 currentTime = 0;
+
+int frameCount = 0;
+float totTime = 0.0f;
+
+
+void initGame() {
+	previousTime = SDL_GetTicks();
+}
 
 void updateGame() {
-	static Uint64 NOW = 0;
+	/*static Uint64 NOW = 0;
 	static Uint64 LAST = 0;
 	
 	LAST = NOW;
 	NOW = SDL_GetPerformanceCounter();
 	
-	double deltaTime = (double)((NOW - LAST) * 1000 / (double)SDL_GetPerformanceFrequency()) * 0.001;
+	double deltaTime = (double)((NOW - LAST) * 1000 / (double)SDL_GetPerformanceFrequency()) * 0.001;*/
+
+	currentTime = SDL_GetTicks();
+	double deltaTime = (currentTime - previousTime) / 1000.0f;
+	previousTime = currentTime;
 
 	globalGameState.dTime = deltaTime;
-	globalGameState.fps = (int)(1.0f / deltaTime);
+	
+	//globalGameState.fps = (unsigned int)(1.0f / deltaTime);
+
+	frameCount += 1;
+
+	totTime += deltaTime;
+	if (totTime >= 1.0f) {
+		globalGameState.fps = frameCount / totTime;
+		frameCount = 0;
+		totTime = 0.0f;
+	}
 }
 
 GameObject3D* initGameObject3D(unsigned int modelId, unsigned int shaderId,

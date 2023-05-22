@@ -1,13 +1,19 @@
 {
     "windowTitle": "3D Engine",
-    "screenWidth": 640,
-    "screenHeight": 480,
+    "screenWidth": 1280,
+    "screenHeight": 720,
     "shaders": [
         {
             "id": 0,
             "desc": "Basic debug shader. Diffuse texture with no lighting.",
             "vertPath": "shaders/debugVert.glsl",
             "fragPath": "shaders/debugFrag.glsl"
+        },
+        {
+            "id": 1,
+            "desc": "Basic shader with directional lighting.",
+            "vertPath": "shaders/phongVert.glsl",
+            "fragPath": "shaders/phongFrag.glsl"
         }
     ],
     "modelData": "assets/models.json"

@@ -21,12 +21,14 @@ std::map<INPUT, bool> currentInputState = {
 int mouseX = 0;
 int mouseY = 0;
 
+Sint32 mouseRelX = 0;
+Sint32 mouseRelY = 0;
+
 void updateInputState() {
 	SDL_Event event;
-
-	SDL_GetRelativeMouseState(&mouseX, &mouseY);
-
-	ImGui_ImplSDL2_ProcessEvent(&event);
+	
+	mouseRelX = 0;
+	mouseRelY = 0;
 
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
@@ -60,9 +62,15 @@ void updateInputState() {
 			case SDL_BUTTON_LEFT: currentInputState[MOUSE_LEFT] = false; break;
 			case SDL_BUTTON_RIGHT: currentInputState[MOUSE_RIGHT] = false; break;
 			} break;
+		case SDL_MOUSEMOTION:
+			mouseRelX = event.motion.xrel;
+			mouseRelY = event.motion.yrel;
+			break;
 		default: break;
 		}
 	}
+
+	//ImGui_ImplSDL2_ProcessEvent(&event);
 }
 
 bool handleInput(INPUT input) {
@@ -79,7 +87,7 @@ bool checkInputState(INPUT input) {
 	return currentInputState[input];
 }
 
-void getMouseXY(int& x, int& y) {
-	x = mouseX;
-	y = mouseY;
+void getMouseXY(Sint32& x, Sint32& y) {
+	x = mouseRelX;
+	y = mouseRelY;
 }

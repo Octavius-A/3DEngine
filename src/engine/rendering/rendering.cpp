@@ -90,9 +90,12 @@ ERROR_CODE initSDL(const char* windowTitle, int screenWidth, int screenHeight) {
 	if (window == NULL) {
 		return FAILED_INIT_SDL;
 	}
-
+	
+	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1", SDL_HINT_OVERRIDE);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
-	SDL_CaptureMouse(SDL_TRUE);
+	
+
+	SDL_CaptureMouse(SDL_FALSE);
 
 	return SUCCESS;
 }
@@ -121,7 +124,7 @@ ERROR_CODE initImGui() {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos;
 	ImGui::StyleColorsDark();
 	ImGui_ImplSDL2_InitForOpenGL(window, glContext);
 	ImGui_ImplOpenGL3_Init("#version 330 core");
@@ -191,11 +194,17 @@ void renderFrame() {
 	projection = glm::perspective(glm::radians(camera.fov), (float)screenWidth / (float)screenHeight, 0.1f, 50.0f);
 
 	// Render Game objects with the basic shader
-	Shader* basicShader = shaderBank[0];
+	Shader* basicShader = shaderBank[1];
 	basicShader->use();
 	basicShader->setMat4("projection", projection);
 	basicShader->setMat4("view", view);
 	basicShader->setInt("material.diffuse", 0);
+
+	// Set the directional light
+	basicShader->setVec3("dirLight.direction", -0.3f, -1.0f, -1.0f);
+	basicShader->setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
+	basicShader->setVec3("dirLight.diffuse", 0.8f, 0.8f, 0.8f);
+
 	std::vector<GameObject3D*>::iterator it;
 	for (it = globalGameState.gameObjects.begin(); it != globalGameState.gameObjects.end(); ++it) {
 		GameObject3D* obj = *it;

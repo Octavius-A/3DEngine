@@ -25,6 +25,7 @@ struct GameState {
 
 extern GameState globalGameState;
 
+void initGame(); // right now this is just for starting delta time
 void updateGame();
 
 // Initialises a new 3D game object, adds it to the game object list, and returns a pointer
