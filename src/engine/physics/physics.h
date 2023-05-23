@@ -16,6 +16,9 @@ void updatePhysicsEngine(btKinematicCharacterController* playerRB); // this is a
 void exitPhysicsEngine();
 
 btRigidBody* registerStaticCollisionMesh(const char* path, glm::vec3 position);
+
 btRigidBody* registerCollisionSphere(glm::vec3 position, float radius, float mass);
 btRigidBody* registerCollisionCapsule(glm::vec3 position, float radius, float height, float mass);
 btKinematicCharacterController* registerCharacterController();
+
+void loadPhysicsWorld(const char* path);

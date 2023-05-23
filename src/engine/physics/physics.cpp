@@ -21,6 +21,8 @@ btAxisSweep3* sweepBP = new btAxisSweep3(worldMin, worldMax);
 
 btAlignedObjectArray<btCollisionShape*> collisionShapes;
 
+void registerAiMesh(aiMesh* mesh);
+
 void initPhysicsEngine() {
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -29,12 +31,70 @@ void initPhysicsEngine() {
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));
 	dynamicsWorld->getDispatchInfo().m_allowedCcdPenetration = 0.0001f;
+}
+
+void loadPhysicsWorld(const char* path) {
+	Assimp::Importer import;
+	const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+		std::cout << "Error loading collision mesh " << import.GetErrorString() << std::endl;
+		return; // ?
+	}
+
+	aiNode* rootNode = scene->mRootNode;
+
+	for (unsigned int i = 0; i < rootNode->mNumChildren; ++i) {
+		aiNode* child = rootNode->mChildren[i];
+
+		aiMesh* mesh = scene->mMeshes[child->mMeshes[0]];
+
+		registerAiMesh(mesh);
+	}
+}
+
+void registerAiMesh(aiMesh* mesh) {
+
+	btTriangleMesh* triangleMesh = new btTriangleMesh();
+
+	for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
+		aiFace face = mesh->mFaces[i];
+		// aiVextor3D -> btVector3
+
+		// grab the 3 verts -- assuming only 3
+		aiVector3D tmpv1 = mesh->mVertices[face.mIndices[0]];
+		aiVector3D tmpv2 = mesh->mVertices[face.mIndices[1]];
+		aiVector3D tmpv3 = mesh->mVertices[face.mIndices[2]];
+
+		btVector3 btv1 = { tmpv1.x, tmpv1.y, tmpv1.z };
+		btVector3 btv2 = { tmpv2.x, tmpv2.y, tmpv2.z };
+		btVector3 btv3 = { tmpv3.x, tmpv3.y, tmpv3.z };
+
+		triangleMesh->addTriangle(btv1, btv2, btv3);
+
+	}
+
+	btCollisionShape* box = new btBvhTriangleMeshShape(triangleMesh, true);
+
+	collisionShapes.push_back(box);
+
+	btTransform meshTransform;
+	meshTransform.setIdentity();
+	//meshTransform.setOrigin(btVector3(position.x, position.y, position.z));
+
+	btScalar mass(0.);
 
 
+	btVector3 localInertia(0, 0, 0);
 
-	//broadPhase = new btDbvtBroadphase();
-	//ghostPairCallback = new btGhostPairCallback();
-	//broadPhase->getOverlappingPairCache()->setInternalGhostPairCallback(ghostPairCallback);
+	//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
+	btDefaultMotionState* myMotionState = new btDefaultMotionState(meshTransform);
+	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, box, localInertia);
+	btRigidBody* body = new btRigidBody(rbInfo);
+	//body->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
+
+	//add the body to the dynamics world
+	dynamicsWorld->addRigidBody(body);
+	//dynamicsWorld->addCollisionObject(body, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
 
 }
 

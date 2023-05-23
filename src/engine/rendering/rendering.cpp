@@ -21,7 +21,6 @@
 ERROR_CODE initSDL(const char* windowTitle, int screenWidth, int screenHeight);
 ERROR_CODE initGL();
 ERROR_CODE initImGui();
-void renderGameObjects(); // TODO: add flag to override shader?
 
 SDL_Window* window = NULL;
 SDL_GLContext glContext;
