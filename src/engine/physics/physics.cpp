@@ -235,9 +235,9 @@ btKinematicCharacterController* registerCharacterController() {
 	ghostObject->setWorldTransform(startTransform);
 
 	sweepBP->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
-	btScalar characterHeight = 0.5;
+	btScalar characterHeight = 1.0;
 	btScalar characterWidth = 0.25;
-	btConvexShape* capsule = new btCapsuleShape(characterWidth, characterHeight);
+	btConvexShape* capsule = new btCapsuleShapeZ(characterWidth, characterHeight);
 	
 	ghostObject->setCollisionShape(capsule);
 	ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);

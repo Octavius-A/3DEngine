@@ -44,15 +44,17 @@ void mainLoop() {
 
 
 	// init the collision world
-	initGameObject3D(3, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
-	initGameObject3D(4, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
-	initGameObject3D(5, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
-	initGameObject3D(6, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
-	initGameObject3D(7, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
-	initGameObject3D(8, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
-	initGameObject3D(9, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
-
-	loadPhysicsWorld("assets/models/collisiontest.obj");
+	//initGameObject3D(3, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
+	//initGameObject3D(4, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
+	//initGameObject3D(5, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
+	//initGameObject3D(6, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
+	//initGameObject3D(7, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
+	//initGameObject3D(8, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
+	//initGameObject3D(9, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
+	initGameObject3D(10, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
+	loadPhysicsWorld("assets/models/level_01_collision.obj");
+	//loadPhysicsWorld("assets/models/lighting_test.obj");
+	//loadPhysicsWorld("assets/models/collisiontest.obj");
 	bool running = true;
 
 	btKinematicCharacterController* pc = registerCharacterController();
@@ -85,10 +87,10 @@ void mainLoop() {
 	
 		btVector3 pos = pc->getGhostObject()->getWorldTransform().getOrigin();
 
-		player->controller->position = glm::vec3(pos.x(), pos.y() + 0.5f, pos.z());
+		player->controller->position = glm::vec3(pos.x(), pos.y() + 0.75, pos.z());
 
 		setCameraParams(player->controller->position, player->controller->direction, player->controller->up);
-		
+
 		renderFrame();
 
 	}

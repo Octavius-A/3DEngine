@@ -119,6 +119,16 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
         aiString str;
         material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
         std::string file = str.C_Str();
+        
+        if (file == "") {
+            file = "green.png";
+        }
+        else {
+            const int idx = file.find_last_of("\\/");
+            if (idx != std::string::npos) {
+                file = file.substr(idx + 1);
+            }
+        }
 
         txId = loadTexture(std::string(c_textureDir + file).c_str());
     }

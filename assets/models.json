@@ -49,6 +49,16 @@
             "id": 9,
             "desc": "Collision test wall",
             "path": "assets/models/collisiontest_wall_4.obj"
+        },
+        {
+            "id": 10,
+            "desc": "the level",
+            "path": "assets/models/level_01.obj"
+        },
+        {
+            "id": 11,
+            "desc": "the level",
+            "path": "assets/models/lighting_test.obj"
         }
     ]
 }
