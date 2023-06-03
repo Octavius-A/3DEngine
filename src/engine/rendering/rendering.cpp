@@ -33,9 +33,13 @@ std::unordered_map<unsigned int, Model*> modelBank;
 
 const unsigned int shadowWidth = 2048;
 const unsigned int shadowHeight = 2048;
-constexpr unsigned int numLights = 1;
-unsigned int depthCubemapList[numLights];
-unsigned int depthMapFBOList[numLights];
+
+
+constexpr unsigned int maxLights = 20;
+unsigned int depthCubemapList[maxLights];
+unsigned int depthMapFBOList[maxLights];
+PointLight pointLights[maxLights];
+unsigned int numLights = 0;
 
 Camera camera = Camera{
 	glm::vec3(0.0f, 0.0f, 0.0f),
@@ -129,7 +133,7 @@ ERROR_CODE initGL() {
 	glEnable(GL_DEPTH_TEST);
 	/*glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);*/
-	for (int i = 0; i < numLights; ++i) {
+	for (int i = 0; i < maxLights; ++i) {
 		glGenFramebuffers(1, &depthMapFBOList[i]);
 
 		glGenTextures(1, &depthCubemapList[i]);
@@ -166,6 +170,36 @@ ERROR_CODE initImGui() {
 	ImGui_ImplOpenGL3_Init("#version 330 core");
 
 	return SUCCESS;
+}
+
+void initLights(json lights, json lightParams) {
+
+	/*json::iterator shaderIt;
+	for (shaderIt = resources["shaders"].begin(); shaderIt != resources["shaders"].end(); ++shaderIt) {*/
+	json::iterator lightsIt;
+	for (lightsIt = lights.begin(); lightsIt != lights.end(); ++lightsIt) {
+		json light = *lightsIt;
+		json params = lightParams[light["params"]];
+
+
+		glm::vec3 position = glm::vec3(light["pos"][0], light["pos"][1], light["pos"][2]);
+		// I think I need to specify only one ambient value. how does the shader look like?
+		glm::vec3 ambient = glm::vec3(params["ambient"][0], params["ambient"][1], params["ambient"][2]);
+		glm::vec3 diffuse = glm::vec3(params["diffuse"][0], params["diffuse"][1], params["diffuse"][2]);
+		float constant = params["constant"];
+		float linear = params["linear"];
+		float quadratic = params["quadratic"];
+		float bias = params["bias"];
+
+		if (numLights < maxLights) {
+			PointLight p = { position, ambient, diffuse, constant, linear, quadratic, bias };
+			pointLights[numLights] = p;
+			numLights += 1;
+		}
+		else {
+			std::cout << "WARNING - max number of lights exceeded" << std::endl;
+		}
+	}
 }
 
 GLuint loadTexture(const char* path) {
@@ -215,6 +249,44 @@ void setCameraParams(glm::vec3 pos, glm::vec3 front, glm::vec3 up){
 	camera.up = up;
 }
 
+void renderShadowMaps() {
+	glClearColor(0.53f, 0.76f, 0.92f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+
+	float aspect = (float)shadowWidth / (float)shadowHeight;
+	float near = 0.1;
+	float far = 100.0f;
+	glm::mat4 shadowProjection = glm::perspective(glm::radians(90.0f), aspect, near, far);
+
+	for (int i = 0; i < numLights; ++i) {
+		PointLight light = pointLights[i];
+
+		glm::mat4 shadowTransforms[6];
+		shadowTransforms[0] = shadowProjection * glm::lookAt(light.pos, light.pos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		shadowTransforms[1] = shadowProjection * glm::lookAt(light.pos, light.pos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		shadowTransforms[2] = shadowProjection * glm::lookAt(light.pos, light.pos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		shadowTransforms[3] = shadowProjection * glm::lookAt(light.pos, light.pos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+		shadowTransforms[4] = shadowProjection * glm::lookAt(light.pos, light.pos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		shadowTransforms[5] = shadowProjection * glm::lookAt(light.pos, light.pos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+
+		glViewport(0, 0, shadowWidth, shadowHeight);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOList[i]);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		Shader* depthShader = shaderBank[2];
+		depthShader->use();
+		
+		for (int j = 0; j < 6; ++j) {
+			depthShader->setMat4("shadowMatrices[" + std::to_string(j) + "]", shadowTransforms[j]);
+		}
+		depthShader->setFloat("far_plane", far);
+		depthShader->setVec3("lightPos", light.pos);
+		glCullFace(GL_FRONT);
+		renderObjects(depthShader);
+		glCullFace(GL_BACK);
+	}
+}
+
 void renderFrame() {
 	glClearColor(0.53f, 0.76f, 0.92f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -225,41 +297,49 @@ void renderFrame() {
 
 	glEnable(GL_DEPTH_TEST);
 
-	glm::vec3 light1Pos = glm::vec3(0.0, 70.0, 0.0);
-	//glm::vec3 light2Pos = glm::vec3(4.0, 3.0, 0.0);
-	//glm::vec3 lightPositions[numLights] = { light1Pos, light2Pos };
-	glm::vec3 lightPositions[numLights] = { light1Pos };
-	float aspect = (float)shadowWidth / (float)shadowHeight;
-	float near = 0.1f;
+	//glm::vec3 light1Pos = glm::vec3(0.0, 70.0, 0.0);
+	////glm::vec3 light2Pos = glm::vec3(4.0, 3.0, 0.0);
+	////glm::vec3 lightPositions[numLights] = { light1Pos, light2Pos };
+	//glm::vec3 lightPositions[numLights] = { light1Pos };
+	//float aspect = (float)shadowWidth / (float)shadowHeight;
+	//float near = 0.1f;
 	float far = 100.0f;
-	glm::mat4 shadowProjection = glm::perspective(glm::radians(90.0f), aspect, near, far);
-	//glm::mat4 shadowProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near, far);
-	for (int i = 0; i < numLights; ++i) {
-		// just change this to an array since its always 6;
-		glm::mat4 shadowTransforms[6];
-		shadowTransforms[0] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-		shadowTransforms[1] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-		shadowTransforms[2] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		shadowTransforms[3] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-		shadowTransforms[4] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-		shadowTransforms[5] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 
-		// render the scene to the depth cubemap
-		glViewport(0, 0, shadowWidth, shadowHeight);
-		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOList[i]);
-		glClear(GL_DEPTH_BUFFER_BIT);
-		Shader* depthShader = shaderBank[2];
-		depthShader->use();
-
-		for (int i = 0; i < 6; ++i) {
-			depthShader->setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
-		}
-		depthShader->setFloat("far_plane", far);
-		depthShader->setVec3("lightPos", lightPositions[i]);
-		glCullFace(GL_FRONT);
-		renderObjects(depthShader);
-		glCullFace(GL_BACK);
+	static bool doonce = true;
+	if (doonce) {
+		renderShadowMaps();
+		doonce = false;
 	}
+
+	//
+	//glm::mat4 shadowProjection = glm::perspective(glm::radians(90.0f), aspect, near, far);
+	////glm::mat4 shadowProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near, far);
+	//for (int i = 0; i < numLights; ++i) {
+	//	// just change this to an array since its always 6;
+	//	glm::mat4 shadowTransforms[6];
+	//	shadowTransforms[0] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+	//	shadowTransforms[1] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+	//	shadowTransforms[2] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	//	shadowTransforms[3] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+	//	shadowTransforms[4] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+	//	shadowTransforms[5] = shadowProjection * glm::lookAt(lightPositions[i], lightPositions[i] + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+
+	//	// render the scene to the depth cubemap
+	//	glViewport(0, 0, shadowWidth, shadowHeight);
+	//	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOList[i]);
+	//	glClear(GL_DEPTH_BUFFER_BIT);
+	//	Shader* depthShader = shaderBank[2];
+	//	depthShader->use();
+
+	//	for (int i = 0; i < 6; ++i) {
+	//		depthShader->setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
+	//	}
+	//	depthShader->setFloat("far_plane", far);
+	//	depthShader->setVec3("lightPos", lightPositions[i]);
+	//	glCullFace(GL_FRONT);
+	//	renderObjects(depthShader);
+	//	glCullFace(GL_BACK);
+	//}
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -281,19 +361,20 @@ void renderFrame() {
 	basicShader->setInt("pointLightCount", numLights);
 
 	for (int i = 0; i < numLights; ++i) {
-		basicShader->setVec3("pointLights[" + std::to_string(i) + "].position", lightPositions[i]);
-		basicShader->setVec3("pointLights[" + std::to_string(i) + "].ambient", 0.6f, 0.6f, 0.6f);
-		basicShader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", 1.0f, 1.0f, 1.0f);
+		PointLight light = pointLights[i];
+		basicShader->setVec3("pointLights[" + std::to_string(i) + "].position", light.pos);
+		basicShader->setVec3("pointLights[" + std::to_string(i) + "].ambient", light.ambient);
+		basicShader->setVec3("pointLights[" + std::to_string(i) + "].diffuse", light.diffuse);
 
-		basicShader->setFloat("pointLights[" + std::to_string(i) + "].constant", 1.0f);
-		basicShader->setFloat("pointLights[" + std::to_string(i) + "].linear", 0.0f);
-		basicShader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", 0.0f);
+		basicShader->setFloat("pointLights[" + std::to_string(i) + "].constant", light.constant);
+		basicShader->setFloat("pointLights[" + std::to_string(i) + "].linear", light.linear);
+		basicShader->setFloat("pointLights[" + std::to_string(i) + "].quadratic", light.quadratic);
+		basicShader->setFloat("pointLights[" + std::to_string(i) + "].bias", light.bias);
 
 		basicShader->setInt("depthMaps[" + std::to_string(i) + "]", i + 1);
 
 		glActiveTexture(GL_TEXTURE1 + i);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemapList[i]);
-
 	}
 
 	glm::vec3 gridSamplingDisk[20] = {

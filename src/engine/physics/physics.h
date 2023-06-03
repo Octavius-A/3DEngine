@@ -19,6 +19,6 @@ btRigidBody* registerStaticCollisionMesh(const char* path, glm::vec3 position);
 
 btRigidBody* registerCollisionSphere(glm::vec3 position, float radius, float mass);
 btRigidBody* registerCollisionCapsule(glm::vec3 position, float radius, float height, float mass);
-btKinematicCharacterController* registerCharacterController();
+btKinematicCharacterController* registerCharacterController(glm::vec3 origin);
 
 void loadPhysicsWorld(const char* path);

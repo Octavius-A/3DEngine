@@ -42,6 +42,10 @@ void mainLoop() {
 
 	Player* player = new Player();
 
+	json levelData;
+	loadJson("levels/level01.json", levelData);
+	initLevel(levelData);
+
 
 	// init the collision world
 	//initGameObject3D(3, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
@@ -51,15 +55,19 @@ void mainLoop() {
 	//initGameObject3D(7, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
 	//initGameObject3D(8, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
 	//initGameObject3D(9, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
-	initGameObject3D(10, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
-	loadPhysicsWorld("assets/models/level_01_collision.obj");
+	//initGameObject3D(10, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
+	//loadPhysicsWorld("assets/models/level_01_collision.obj");
 	//loadPhysicsWorld("assets/models/lighting_test.obj");
 	//loadPhysicsWorld("assets/models/collisiontest.obj");
 	bool running = true;
 
-	btKinematicCharacterController* pc = registerCharacterController();
+	glm::vec3 playerOrigin = glm::vec3(levelData["playerStart"][0],
+		levelData["playerStart"][1],
+		levelData["playerStart"][2]);
+	btKinematicCharacterController* pc = registerCharacterController(playerOrigin);
 
-
+	//renderShadowMaps();
+	
 	while (running) {
 
 		updateInputState();
@@ -90,7 +98,7 @@ void mainLoop() {
 		player->controller->position = glm::vec3(pos.x(), pos.y() + 0.75, pos.z());
 
 		setCameraParams(player->controller->position, player->controller->direction, player->controller->up);
-
+		//
 		renderFrame();
 
 	}

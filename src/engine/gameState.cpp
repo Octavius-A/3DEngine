@@ -1,5 +1,6 @@
 #include "gameState.h"
 #include "rendering/rendering.h"
+#include "physics/physics.h"
 
 #include <iostream>
 
@@ -54,4 +55,15 @@ GameObject3D* initGameObject3D(unsigned int modelId, unsigned int shaderId,
 	};
 	globalGameState.gameObjects.push_back(obj);
 	return obj;
+}
+
+void initLevel(json levelData) {
+	unsigned int levelMeshID = levelData["levelGeom"];
+	std::string collisionPath = levelData["levelCollision"];
+	initGameObject3D(levelMeshID, 0, glm::vec3(0.0f), glm::vec3(0.0f), 1.0f);
+	loadPhysicsWorld(collisionPath.c_str());
+	//glm::vec3 playerOrigin = glm::vec3(levelData["playerStart"][0],
+	//	levelData["playerStart"][1],
+	//	levelData["playerStart"][2]);
+	initLights(levelData["lights"], levelData["light_params"]);
 }

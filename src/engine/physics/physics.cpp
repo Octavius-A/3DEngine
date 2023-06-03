@@ -227,10 +227,10 @@ btRigidBody* registerCollisionCapsule(glm::vec3 position, float _radius, float _
 	return body;
 }
 
-btKinematicCharacterController* registerCharacterController() {
+btKinematicCharacterController* registerCharacterController(glm::vec3 origin) {
 	btTransform startTransform;
 	startTransform.setIdentity();
-	startTransform.setOrigin(btVector3(0.0f, 10.0f, 0.0f));
+	startTransform.setOrigin(btVector3(origin.x, origin.y, origin.z));
 	btPairCachingGhostObject* ghostObject = new btPairCachingGhostObject();
 	ghostObject->setWorldTransform(startTransform);
 

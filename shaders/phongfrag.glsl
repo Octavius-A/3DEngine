@@ -26,6 +26,7 @@ struct PointLight {
     float constant;
     float linear;
     float quadratic;
+    float bias;
 };
 #define MAX_POINT_LIGHTS 10
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
@@ -39,16 +40,6 @@ in vec2 TexCoords;
 uniform vec3 viewPos;
 uniform Material material;
 uniform float far_plane;
-
-// vec3 gridSamplingDisk[20] = vec3[]
-// (
-//     vec3(1, 1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1, 1,  1),
-//     vec3(1, 1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
-//     vec3(1, 1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1, 1,  0),
-//     vec3(1, 0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1, 0, -1),
-//     vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
-// );
-
 
 vec4 calcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 vec4 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, float shadow);
@@ -107,14 +98,14 @@ vec4 calcDirLight(DirLight light, vec3 normal, vec3 viewDir) {
     return final;
 }
 
-float calcShadow(PointLight light,vec3 normal, vec3 fragPos, int depthMapIndex) {
+float calcShadow(PointLight light, vec3 normal, vec3 fragPos, int depthMapIndex) {
     vec3 fragToLight = fragPos - light.position;
     float closestDepth = texture(depthMaps[depthMapIndex], fragToLight).r;
     closestDepth *= far_plane;
     float currentDepth = length(fragToLight);
     vec3 lightDir = normalize(light.position - FragPos);
     //float bias = max(0.5 * (1.0 - dot(normal, lightDir)), 0.005);  
-    float bias = 0.5;
+    float bias = light.bias;
     float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
     // vec3 fragToLight = fragPos - light.position;
 

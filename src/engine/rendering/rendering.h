@@ -17,8 +17,20 @@ struct Camera {
 	float fov;
 };
 
+struct PointLight {
+	glm::vec3 pos;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	float constant;
+	float linear;
+	float quadratic;
+	float bias;
+};
+
 ERROR_CODE initRendering(json resources);
+void initLights(json lights, json lightParams);
 void setCameraParams(glm::vec3 pos, glm::vec3 front, glm::vec3 up);
 void exitRendering();
+void renderShadowMaps();
 void renderFrame();
 

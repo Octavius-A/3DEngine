@@ -1,0 +1,35 @@
+{
+    "levelName" : "test scene",
+    "levelGeom" : 10,
+    "levelCollision": "assets/models/level_01_collision.obj",
+    "playerStart" : [0.0,3.0, 0.0],
+    "light_params": {
+        "skylight" : {
+            "type": "point",
+            "bias": 0.1,
+            "ambient": [0.6, 0.6, 0.6],
+            "diffuse": [1.0, 1.0, 1.0],
+            "constant": 1.0,
+            "linear": 0.00,
+            "quadratic": 0.00
+        },
+        "bulb": {
+            "type": "point",
+            "bias": 0.05,
+            "ambient": [0.0, 0.0, 0.0],
+            "diffuse": [1.0, 1.0, 1.0],
+            "constant": 1.0,
+            "linear": 0.05,
+            "quadratic": 0.03
+        }
+    },
+    "lights" : [
+        { "params": "skylight", "pos": [0.0, 70.0, 0.0] },
+        { "params": "bulb", "pos": [-25.0, 4.5, 0.0]},
+        { "params": "bulb", "pos": [25.0, 4.5, 0.0]},
+        { "params": "bulb", "pos": [0.0, 4.5, -25.0]},
+        { "params": "bulb", "pos": [0.0, 4.5, 25.0]},
+        { "params": "bulb", "pos": [6.0, 4.5, 25.0]},
+        { "params": "bulb", "pos": [12.0, 4.5, 25.0]}
+    ]
+}
